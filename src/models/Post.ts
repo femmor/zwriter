@@ -24,18 +24,16 @@ const postSchema = new Schema({
         required: true 
     },
     slug: { 
-        type: String, 
-        required: true, 
+        type: String,
         unique: true 
     },
     content: { 
-        type: String, 
-        required: true 
+        type: String
     },
     status: { 
         type: String, 
         enum: Object.values(PostStatus), 
-        required: true 
+        default: PostStatus.DRAFT
     },
     seo: {
         title: { 
