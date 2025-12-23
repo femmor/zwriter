@@ -6,7 +6,6 @@ enum PostStatus {
 }
 
 interface Post extends Document {
-    id: string
     title: string
     slug: string
     content: string
@@ -16,7 +15,7 @@ interface Post extends Document {
         description: string
         keywords: string[]
     }
-    author: string
+    author: mongoose.Types.ObjectId
 }
 
 const postSchema = new Schema({
