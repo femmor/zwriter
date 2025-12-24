@@ -35,12 +35,14 @@ const postSchema = new Schema({
     status: { 
         type: String, 
         enum: Object.values(PostStatus), 
-        default: PostStatus.DRAFT
+        default: PostStatus.DRAFT,
+        required: true
     },
     seo: seoSchema,
     author: {
         type: Schema.Types.ObjectId,
         ref: 'User',
+        required: true
     },
     categories: [{
         type: Schema.Types.ObjectId,
