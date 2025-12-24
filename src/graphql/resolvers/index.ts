@@ -107,7 +107,7 @@ export const resolvers = {
             }
 
             const result = await Post.findByIdAndDelete(id);
-            return result ? true : false;
+            return !!result;
         }
     },
 };
