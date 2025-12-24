@@ -7,20 +7,30 @@ enum UserRole {
 }
 
 interface User extends Document {
+    name: string;
     email: string;
+    image: string;
     role: UserRole;
 }
 
 const userSchema = new Schema({
+    name: { 
+        type: String, 
+        required: true 
+    },
     email: { 
         type: String, 
         required: true, 
         unique: true 
     },
+    image: { 
+        type: String 
+    },
     role: { 
         type: String, 
         enum: Object.values(UserRole), 
-        required: true 
+        required: true,
+        default: UserRole.VIEWER
     }
 }, {
     timestamps: true

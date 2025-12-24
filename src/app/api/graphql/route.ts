@@ -3,6 +3,7 @@ import { startServerAndCreateNextHandler } from "@as-integrations/next";
 import { connectDB } from "@/lib/db";
 import { typeDefs } from "@/graphql/schema";
 import { resolvers } from "@/graphql/resolvers";
+import { createContext } from "@/graphql/context";
 
 const server = new ApolloServer({
     typeDefs,
@@ -21,7 +22,7 @@ async function ensureDbConnection(): Promise<unknown> {
 const handler = startServerAndCreateNextHandler(server, {
     context: async () => {
         await ensureDbConnection();
-        return {};
+        return createContext();
     },
 });
 
