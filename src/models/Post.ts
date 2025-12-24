@@ -30,7 +30,8 @@ const postSchema = new Schema({
         index: true
     },
     content: { 
-        type: String
+        type: String,
+        required: true
     },
     status: { 
         type: String, 

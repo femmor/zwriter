@@ -21,7 +21,7 @@ export const typeDefs = gql`
         id: ID!
         title: String!
         slug: String!
-        content: String
+        content: String!
         status: PostStatus!
         seo: SEO
         createdAt: String!
