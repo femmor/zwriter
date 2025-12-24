@@ -37,4 +37,12 @@ jobs:
         run: bun run lint
 
       - name: Build
+        env:
+          # Set placeholder environment variables for CI build
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID || 'dummy-client-id-for-ci' }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET || 'dummy-client-secret-for-ci' }}
+          MONGODB_URI: ${{ secrets.MONGODB_URI || 'mongodb://dummy-uri-for-ci' }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || 'dummy-secret-for-ci' }}
+          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL || 'http://localhost:3000' }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || 'sk-dummy-key-for-ci' }}
         run: bun run build

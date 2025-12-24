@@ -9,9 +9,11 @@ export const typeDefs = gql`
     type Post {
         id: ID!
         title: String!
-        slug: String
+        slug: String!
         content: String!
         status: PostStatus!
+        createdAt: String
+        updatedAt: String
     }
 
     type Query {
