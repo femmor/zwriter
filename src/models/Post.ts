@@ -9,8 +9,14 @@ interface Post extends Document {
     title: string
     slug: string
     content: string
+    author: mongoose.Types.ObjectId
     status: PostStatus
 }
+
+const seoSchema = new Schema({
+    title: { type: String },
+    description: { type: String }
+});
 
 const postSchema = new Schema({
     title: { 
@@ -18,7 +24,10 @@ const postSchema = new Schema({
         required: true 
     },
     slug: { 
-        type: String
+        type: String,
+        required: true,
+        unique: true,
+        index: true
     },
     content: { 
         type: String
@@ -27,7 +36,16 @@ const postSchema = new Schema({
         type: String, 
         enum: Object.values(PostStatus), 
         default: PostStatus.DRAFT
-    }
+    },
+    seo: seoSchema,
+    author: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+    },
+    categories: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Category',
+    }]
 }, {
     timestamps: true
 })

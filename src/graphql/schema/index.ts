@@ -6,21 +6,43 @@ export const typeDefs = gql`
         PUBLISHED
     }
 
+    type SEO {
+        title: String
+        description: String
+    }
+
+    type Category {
+        id: ID!
+        name: String!
+        slug: String!
+    }
+
     type Post {
         id: ID!
         title: String!
         slug: String!
-        content: String!
+        content: String
         status: PostStatus!
-        createdAt: String
-        updatedAt: String
+        seo: SEO
+        createdAt: String!
+        updatedAt: String!
     }
 
     type Query {
-        posts: [Post!]!
+        posts(status: String): [Post!]!
+        postBySlug(slug: String!): Post
     }
 
     type Mutation {
-        createPost(title: String!, content: String!): Post!
+        createPost(title: String!): Post!
+        updatePost(
+            id: ID!
+            title: String
+            content: String
+            seoTitle: String
+            seoDescription: String
+        ): Post!
+        publishPost(id: ID!): Post!
+        deletePost(id: ID!): Boolean!
     }
 `
