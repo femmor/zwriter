@@ -77,7 +77,7 @@ export const resolvers = {
                 throw new Error(`Failed to create post: ${error instanceof Error ? error.message : 'Unknown error'}`);
             }
         },
-        updatePost: async (_: unknown, { id }: UpdatePostArgs, ctx: Context) => {
+        updatePost: async (_: unknown, { id, title, content, seoTitle, seoDescription }: UpdatePostArgs, ctx: Context) => {
             if (!ctx.user?.id) {
                 throw new Error('Authentication required to update a post.');
             }
@@ -86,7 +86,15 @@ export const resolvers = {
                 throw new Error('Insufficient permissions. Editor or Admin role required.');
             }
 
-            return Post.findByIdAndUpdate(id, { status: 'PUBLISHED' }, { new: true });
+            return Post.findByIdAndUpdate(id, { 
+                status: 'PUBLISHED',
+                title,
+                content,
+                seo: {
+                    title: seoTitle,
+                    description: seoDescription
+                }
+            }, { new: true });
         },
 
         deletePost: async (_: unknown, { id }: PostIdArgs, ctx: Context) => {
