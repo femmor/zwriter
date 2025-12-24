@@ -5,12 +5,30 @@ import getMongoClient from "@/lib/mongoAdapter";
 import { connectDB } from "@/lib/db";
 import User from "@/models/User";
 
+// Environment variable validation
+const requiredEnvVars = {
+    GITHUB_ID: process.env.GITHUB_ID,
+    GITHUB_SECRET: process.env.GITHUB_SECRET,
+    MONGODB_URI: process.env.MONGODB_URI,
+};
+
+// Only validate in production or when not in build mode
+const shouldValidateEnv = process.env.NODE_ENV === 'production' || process.env.NEXT_PHASE !== 'phase-production-build';
+
+if (shouldValidateEnv) {
+    for (const [key, value] of Object.entries(requiredEnvVars)) {
+        if (!value) {
+            throw new Error(`Missing required environment variable: ${key}`);
+        }
+    }
+}
+
 export const authOptions: AuthOptions = {
     adapter: MongoDBAdapter(getMongoClient()),
     providers: [
         GitHubProvider({
-            clientId: process.env.GITHUB_ID!,
-            clientSecret: process.env.GITHUB_SECRET!
+            clientId: process.env.GITHUB_ID || 'placeholder',
+            clientSecret: process.env.GITHUB_SECRET || 'placeholder'
         })
     ],
     callbacks: {

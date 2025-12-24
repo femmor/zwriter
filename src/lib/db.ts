@@ -20,6 +20,11 @@ export async function connectDB() {
     // Check for environment variable only when connection is attempted
     const MONGODB_URI = process.env.MONGODB_URI;
     
+    // During build phase, return early to prevent build failures
+    if (process.env.NEXT_PHASE === 'phase-production-build') {
+        return {} as typeof mongoose;
+    }
+    
     if (!MONGODB_URI) {
         throw new Error("Please define the MONGODB_URI environment variable inside .env.local");
     }
