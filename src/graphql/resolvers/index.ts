@@ -1,5 +1,7 @@
 import Post from '@/models/Post';
 
+const uuid = crypto.randomUUID();
+
 interface CreatePostArgs {
     title: string;
     content: string;
@@ -50,7 +52,7 @@ export const resolvers = {
                 
                 // Check if slug already exists and make it unique if needed
                 const existingPost = await Post.findOne({ slug });
-                const finalSlug = existingPost ? `${slug}-${Date.now()}` : slug;
+                const finalSlug = existingPost ? `${slug}-${uuid}` : slug;
 
                 const newPost = await Post.create({
                     title: args.title,
