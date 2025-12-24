@@ -5,30 +5,37 @@ import getMongoClient from "@/lib/mongoAdapter";
 import { connectDB } from "@/lib/db";
 import User from "@/models/User";
 
-// Environment variable validation
-const requiredEnvVars = {
-    GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
-    GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
-    MONGODB_URI: process.env.MONGODB_URI,
-};
+// Environment variable validation function
+function validateEnvironmentVariables() {
+    const requiredEnvVars = {
+        GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+        GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+        MONGODB_URI: process.env.MONGODB_URI,
+    };
 
-// Only validate in production or when not in build mode
-const shouldValidateEnv = process.env.NODE_ENV === 'production' || process.env.NEXT_PHASE !== 'phase-production-build';
-
-if (shouldValidateEnv) {
-    for (const [key, value] of Object.entries(requiredEnvVars)) {
-        if (!value) {
-            throw new Error(`Missing required environment variable: ${key}`);
+    // Only validate at runtime, not during build
+    if (typeof window === 'undefined' && process.env.NODE_ENV !== 'test') {
+        for (const [key, value] of Object.entries(requiredEnvVars)) {
+            if (!value) {
+                console.warn(`Warning: Missing environment variable: ${key}`);
+                // Don't throw during build, just log warning
+                if (process.env.NODE_ENV === 'production') {
+                    throw new Error(`Missing required environment variable: ${key}`);
+                }
+            }
         }
     }
 }
+
+// Call validation
+validateEnvironmentVariables();
 
 export const authOptions: AuthOptions = {
     adapter: MongoDBAdapter(getMongoClient()),
     providers: [
         GoogleProvider({
-            clientId: process.env.GOOGLE_CLIENT_ID!,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET!
+            clientId: process.env.GOOGLE_CLIENT_ID || '',
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET || ''
         })
     ],
     callbacks: {
