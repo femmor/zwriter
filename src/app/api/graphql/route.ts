@@ -9,9 +9,18 @@ const server = new ApolloServer({
     resolvers,
 });
 
+// Ensure database connection before handling requests
+let dbConnectionPromise: Promise<unknown> | null = null;
+async function ensureDbConnection(): Promise<unknown> {
+    if (!dbConnectionPromise) {
+        dbConnectionPromise = connectDB();
+    }
+    return dbConnectionPromise;
+}
+
 const handler = startServerAndCreateNextHandler(server, {
     context: async () => {
-        await connectDB();
+        await ensureDbConnection();
         return {};
     },
 });
