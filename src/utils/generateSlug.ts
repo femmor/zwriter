@@ -4,7 +4,9 @@ function generateSlug(text: string): string {
         .toLowerCase()
         .trim()
         .replace(/[^\w\s-]/g, "") // Remove non-word characters
-        .replace(/\s+/g, "-"); // Replace spaces with hyphens
+        .replace(/\s+/g, "-") // Replace spaces with hyphens
+        .replace(/-+/g, "-") // Collapse multiple hyphens
+        .replace(/^-|-$/g, ""); // Remove leading/trailing hyphens
 }
 
 export default generateSlug;
