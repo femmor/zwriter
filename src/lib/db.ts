@@ -1,11 +1,4 @@
-import { ENV } from "@/config/env";
 import mongoose from "mongoose";
-
-const MONGODB_URI = ENV.MONGODB_URI;
-
-if (!MONGODB_URI) {
-    throw new Error("Please define the MONGODB_URI environment variable inside .env.local");
-}
 
 interface MongooseCache {
     conn: typeof mongoose | null;
@@ -24,6 +17,13 @@ if (!cached) {
 }
 
 export async function connectDB() {
+    // Check for environment variable only when connection is attempted
+    const MONGODB_URI = process.env.MONGODB_URI;
+    
+    if (!MONGODB_URI) {
+        throw new Error("Please define the MONGODB_URI environment variable inside .env.local");
+    }
+
     if (cached?.conn) {
         return cached.conn;
     }
