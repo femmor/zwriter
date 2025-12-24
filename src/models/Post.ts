@@ -10,12 +10,6 @@ interface Post extends Document {
     slug: string
     content: string
     status: PostStatus
-    seo: {
-        title: string
-        description: string
-        keywords: string[]
-    }
-    author: mongoose.Types.ObjectId
 }
 
 const postSchema = new Schema({
@@ -34,25 +28,6 @@ const postSchema = new Schema({
         type: String, 
         enum: Object.values(PostStatus), 
         default: PostStatus.DRAFT
-    },
-    seo: {
-        title: { 
-            type: String, 
-            required: true 
-        },
-        description: { 
-            type: String, 
-            required: true 
-        },
-        keywords: { 
-            type: [String], 
-            required: true 
-        }
-    },  
-    author: { 
-        type: Schema.Types.ObjectId, 
-        ref: 'User', 
-        required: true 
     }
 }, {
     timestamps: true
