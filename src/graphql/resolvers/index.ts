@@ -1,6 +1,5 @@
 import Post from '@/models/Post';
 import generateSlug from '@/utils/generateSlug';
-// import { slugify } from "@/lib/slug";
 
 const uuid = crypto.randomUUID();
 
@@ -17,6 +16,14 @@ interface PostBySlugArgs {
 }
 
 interface UpdatePostArgs {
+    id: string;
+    title?: string;
+    content?: string;
+    seoTitle?: string;
+    seoDescription?: string;
+}
+
+interface PostIdArgs {
     id: string;
 }
 
@@ -82,7 +89,7 @@ export const resolvers = {
             return Post.findByIdAndUpdate(id, { status: 'PUBLISHED' }, { new: true });
         },
 
-        deletePost: async (_: unknown, { id }: UpdatePostArgs, ctx: Context) => {
+        deletePost: async (_: unknown, { id }: PostIdArgs, ctx: Context) => {
             if (!ctx.user?.id) {
                 throw new Error('Authentication required to delete a post.');
             }
