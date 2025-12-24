@@ -1,5 +1,5 @@
 import NextAuth, { AuthOptions } from "next-auth";
-import GitHubProvider from "next-auth/providers/github";
+import GoogleProvider from "next-auth/providers/google";
 import { MongoDBAdapter } from "@next-auth/mongodb-adapter";
 import getMongoClient from "@/lib/mongoAdapter";
 import { connectDB } from "@/lib/db";
@@ -7,8 +7,8 @@ import User from "@/models/User";
 
 // Environment variable validation
 const requiredEnvVars = {
-    GITHUB_ID: process.env.GITHUB_ID,
-    GITHUB_SECRET: process.env.GITHUB_SECRET,
+    GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+    GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
     MONGODB_URI: process.env.MONGODB_URI,
 };
 
@@ -26,9 +26,9 @@ if (shouldValidateEnv) {
 export const authOptions: AuthOptions = {
     adapter: MongoDBAdapter(getMongoClient()),
     providers: [
-        GitHubProvider({
-            clientId: process.env.GITHUB_ID || 'placeholder',
-            clientSecret: process.env.GITHUB_SECRET || 'placeholder'
+        GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID!,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET!
         })
     ],
     callbacks: {
