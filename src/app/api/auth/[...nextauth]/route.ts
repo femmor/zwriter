@@ -15,21 +15,40 @@ export const authOptions: AuthOptions = {
     ],
     callbacks: {
         async session({ session }) {
-            await connectDB();
-            
-            if (!session?.user?.email) {
+            try {
+                await connectDB();
+                
+                if (!session?.user?.email) {
+                    return session;
+                }
+
+                const dbUser = await User.findOne({ email: session.user.email });
+
+                if (dbUser) {
+                    session.user.role = dbUser.role || 'VIEWER';
+                    session.user.id = dbUser._id.toString();
+                } else {
+                    session.user.role = 'VIEWER';
+                    session.user.id = '';
+                }
+
                 return session;
+            } catch (error) {
+                console.error('Session callback error:', error);
+                // Return session even if database operations fail
+                return {
+                    ...session,
+                    user: {
+                        ...session.user,
+                        role: 'VIEWER',
+                        id: ''
+                    }
+                };
             }
-
-            const dbUser = await User.findOne({ email: session.user.email });
-
-            session.user.role = dbUser?.role || 'VIEWER';
-            session.user.id = dbUser?._id.toString() || '';
-
-            return session;
         }
     }
 };
+
 const authHandler = NextAuth(authOptions);
 
 export { authHandler as GET, authHandler as POST };
