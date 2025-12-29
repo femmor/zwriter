@@ -130,7 +130,7 @@ export const resolvers = {
             });
         },
         rewritePostWithAI: async (_: unknown, { postId, tone }: {postId: string, tone: string}, ctx: Context) => {
-            if (!ctx.user || ctx.role === "VIEWER")
+            if (!ctx.user || ctx.user.role === "VIEWER")
                 throw new Error("Unauthorized");
 
             const post = await Post.findById(postId);
