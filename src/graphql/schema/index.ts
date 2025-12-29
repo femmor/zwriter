@@ -48,9 +48,6 @@ export const typeDefs = gql`
         ): Post!
         publishPost(id: ID!): Post!
         deletePost(id: ID!): Boolean!
-    }
-
-    extend type Mutation {
         generatePostWithAI(topic: String!): Post!
         rewritePostWithAI(
             postId: ID! 

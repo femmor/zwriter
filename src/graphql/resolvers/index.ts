@@ -116,7 +116,7 @@ export const resolvers = {
         },
 
         generatePostWithAI: async (_: unknown, { topic }: {topic: string}, ctx: Context) => {
-            if (!ctx.user || ctx.role === "VIEWER")
+            if (!ctx.user || ctx.user.role === "VIEWER")
                 throw new Error("Unauthorized");
 
             const content = await generatePostDraft(topic);
@@ -157,10 +157,14 @@ export const resolvers = {
 
             const seoText = await generateSEO(post.content);
 
+            const seoLines = seoText ? seoText.split("\n") : [];
+            if (seoLines.length < 3) {
+                throw new Error("AI SEO generation returned an unexpected format.");
+            }
             post.seo = {
-                title: seoText.split("\n")[0],
-                description: seoText.split("\n")[1],
-                keywords: seoText.split("\n")[2].split(",").map(k => k.trim()),
+                title: seoLines[0],
+                description: seoLines[1],
+                keywords: seoLines[2].split(",").map(k => k.trim()),
             };
 
             await post.save();
