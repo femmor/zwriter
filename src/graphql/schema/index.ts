@@ -28,6 +28,10 @@ export const typeDefs = gql`
         updatedAt: String!
     }
 
+    type AIResult {
+        content: String!
+    }
+
     type Query {
         posts(status: String): [Post!]!
         postBySlug(slug: String!): Post
@@ -44,5 +48,12 @@ export const typeDefs = gql`
         ): Post!
         publishPost(id: ID!): Post!
         deletePost(id: ID!): Boolean!
+        generatePostWithAI(topic: String!): Post!
+        rewritePostWithAI(
+            postId: ID! 
+            tone: String!
+        ): Post!
+        generateSeoWithAI(postId: ID!): Post!
     }
+
 `

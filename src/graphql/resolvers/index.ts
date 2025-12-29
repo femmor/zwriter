@@ -1,3 +1,6 @@
+import { generatePostDraft } from '@/ai/generatePost';
+import { generateSEO } from '@/ai/generateSeo';
+import { rewritePost } from '@/ai/rewritePost';
 import Post from '@/models/Post';
 import generateSlug from '@/utils/generateSlug';
 
@@ -21,6 +24,7 @@ interface UpdatePostArgs {
     content?: string;
     seoTitle?: string;
     seoDescription?: string;
+    seoKeywords?: string;
 }
 
 interface PostIdArgs {
@@ -77,7 +81,7 @@ export const resolvers = {
                 throw new Error(`Failed to create post: ${error instanceof Error ? error.message : 'Unknown error'}`);
             }
         },
-        updatePost: async (_: unknown, { id, title, content, seoTitle, seoDescription }: UpdatePostArgs, ctx: Context) => {
+        updatePost: async (_: unknown, { id, title, content, seoTitle, seoDescription, seoKeywords }: UpdatePostArgs, ctx: Context) => {
             if (!ctx.user?.id) {
                 throw new Error('Authentication required to update a post.');
             }
@@ -92,7 +96,8 @@ export const resolvers = {
                 content,
                 seo: {
                     title: seoTitle,
-                    description: seoDescription
+                    description: seoDescription,
+                    keywords: seoKeywords ? seoKeywords.split(',').map(k => k.trim()) : []
                 }
             }, { new: true });
         },
@@ -108,6 +113,62 @@ export const resolvers = {
 
             const result = await Post.findByIdAndDelete(id);
             return !!result;
-        }
+        },
+
+        generatePostWithAI: async (_: unknown, { topic }: {topic: string}, ctx: Context) => {
+            if (!ctx.user || ctx.user.role === "VIEWER")
+                throw new Error("Unauthorized");
+
+            const content = await generatePostDraft(topic);
+
+            return Post.create({
+                title: topic,
+                slug: generateSlug(topic),
+                content,
+                status: "DRAFT",
+                author: ctx.user.id,
+            });
+        },
+        rewritePostWithAI: async (_: unknown, { postId, tone }: {postId: string, tone: string}, ctx: Context) => {
+            if (!ctx.user || ctx.user.role === "VIEWER")
+                throw new Error("Unauthorized");
+
+            const post = await Post.findById(postId);
+            if (!post) throw new Error("Post not found");
+
+            // Validate tone parameter
+            if (tone !== "formal" && tone !== "casual") {
+                throw new Error("Invalid tone. Must be either 'formal' or 'casual'.");
+            }
+
+            const rewritten = await rewritePost(post.content, tone as "formal" | "casual");
+
+            post.content = rewritten;
+
+            await post.save();
+            return post;
+        },
+        generateSeoWithAI: async (_: unknown, { postId }: {postId: string}, ctx: Context) => {
+            if (ctx.role !== "EDITOR" && ctx.role !== "ADMIN")
+                throw new Error("Unauthorized");
+
+            const post = await Post.findById(postId);
+            if (!post) throw new Error("Post not found");
+
+            const seoText = await generateSEO(post.content);
+
+            const seoLines = seoText ? seoText.split("\n") : [];
+            if (seoLines.length < 3) {
+                throw new Error("AI SEO generation returned an unexpected format.");
+            }
+            post.seo = {
+                title: seoLines[0],
+                description: seoLines[1],
+                keywords: seoLines[2].split(",").map(k => k.trim()),
+            };
+
+            await post.save();
+            return post;
+        },
     },
 };

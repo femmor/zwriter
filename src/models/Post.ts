@@ -11,11 +11,17 @@ interface Post extends Document {
     content: string
     author: mongoose.Types.ObjectId
     status: PostStatus
+    seo?: {
+        title?: string
+        description?: string
+        keywords?: string[]
+    }
 }
 
 const seoSchema = new Schema({
     title: { type: String },
-    description: { type: String }
+    description: { type: String },
+    keywords: [{ type: String }]
 });
 
 const postSchema = new Schema({
@@ -53,6 +59,6 @@ const postSchema = new Schema({
     timestamps: true
 })
 
-const Post = mongoose.model<Post>('Post', postSchema);
+const Post = mongoose.models.Post || mongoose.model<Post>('Post', postSchema);
 
 export default Post;
