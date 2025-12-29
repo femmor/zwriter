@@ -53,8 +53,8 @@ export const typeDefs = gql`
     extend type Mutation {
         generatePostWithAI(topic: String!): Post!
         rewritePostWithAI(
-            postId: 
-            ID! tone: String!
+            postId: ID! 
+            tone: String!
         ): Post!
         generateSeoWithAI(postId: ID!): Post!
     }

@@ -144,8 +144,8 @@ export const resolvers = {
             const rewritten = await rewritePost(post.content, tone as "formal" | "casual");
 
             post.content = rewritten;
-            await post.save();
 
+            await post.save();
             return post;
         },
         generateSeoWithAI: async (_: unknown, { postId }: {postId: string}, ctx: Context) => {
