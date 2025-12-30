@@ -68,19 +68,6 @@ export const resolvers = {
         postVersion: async (_: unknown, { id }: { id: string }) => {
             return await PostVersionService.getVersionById(id);
         },
-        fetchDraftPost: async (_: unknown, { slug }: { slug: string }, ctx: Context) => {
-            // Only allow access to draft posts for authenticated users
-            if (!ctx.user?.id) {
-                throw new Error('Authentication required to access draft posts.');
-            }
-
-            const post = await Post.findOne({ slug, status: "DRAFT" });
-            if (!post) {
-                throw new Error('Draft post not found.');
-            }
-
-            return post;
-        }
     },
     Mutation: {
         createPost: async (_: unknown, args: CreatePostArgs, ctx: Context) => {
