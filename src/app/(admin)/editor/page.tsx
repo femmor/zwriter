@@ -1,3 +1,5 @@
+"use client"
+
 import { useCompletion } from '@ai-sdk/react'
 
 export function AIWriter({ onComplete }: { onComplete: (text: string) => void }) {
