@@ -1,7 +1,7 @@
 "use client";
 
-import {gql} from '@apollo/client';
 import { useQuery } from "@apollo/client/react";
+import {gql} from '@apollo/client';
 
 // Define the types for our GraphQL response
 interface Post {
@@ -15,7 +15,7 @@ interface PostsData {
 }
 
 const POSTS = gql`
-    query {
+    query GetPosts {
         posts {
             id
             title
