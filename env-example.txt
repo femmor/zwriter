@@ -1,5 +1,17 @@
-# Add Later
+# Example environment variables for this project.
+# Copy this file to `.env` (or the appropriate env file) and replace example values.
 
-Rate limiting
-Token caps
-Daily quotas
+# API keys
+OPENAI_API_KEY=your_openai_api_key_here
+GOOGLE_CLIENT_ID=google_client_id
+GOOGLE_CLIENT_SECRET=google_client_secret
+MONGODB_URI=mongo_db_uri
+
+NEXTAUTH_SECRET=secret
+
+# Rate limiting configuration
+RATE_LIMIT_REQUESTS_PER_MINUTE=60
+
+# Token and quota limits
+TOKEN_CAP_PER_REQUEST=4096
+DAILY_QUOTA_REQUESTS=1000
