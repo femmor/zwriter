@@ -12,13 +12,16 @@ const mediaSchema = new Schema(
   {
     url: {
         type: String,
+        required: true,
     },
     type: {
         type: String,
+        required: true,
     },
     uploadedBy: { 
         type: Schema.Types.ObjectId, 
-        ref: "User" 
+        ref: "User",
+        required: true
     },
   },
   { timestamps: true }
