@@ -12,14 +12,17 @@ const postVersionSchema = new Schema(
   {
     postId: { 
         type: Schema.Types.ObjectId, 
-        ref: "Post" 
+        ref: "Post",
+        required: true
     },
     content: {
         type: String,
+        required: true,
     },
     createdBy: { 
         type: Schema.Types.ObjectId, 
-        ref: "User" 
+        ref: "User",
+        required: true
     },
   },
   { 
