@@ -47,6 +47,9 @@ export const typeDefs = gql`
         content: String!
     }
 
+    # Internal query requiring EDITOR or ADMIN role (e.g draftPostBySlug); 
+    # returns a post by slug regardless of status (unlike public postBySlug)
+
     type Query {
         posts(status: String): [Post!]!
         postBySlug(slug: String!): Post
