@@ -14,7 +14,7 @@ interface PostData {
     post: Post | null;
 }
 
-const POST = gql`
+const POST_BY_SLUG = gql`
     query PostBySlug($slug: String!) {
         post(slug: $slug) {
             id
@@ -27,7 +27,7 @@ const POST = gql`
 
 export default function BlogPost({ params }: { params: { slug: string } }) {
     const { slug } = params;
-    const { data, loading, error } = useQuery<PostData>(POST, {
+    const { data, loading, error } = useQuery<PostData>(POST_BY_SLUG, {
         variables: { slug },
     });
 
