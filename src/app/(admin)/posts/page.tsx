@@ -15,7 +15,7 @@ interface PostsData {
 }
 
 const POSTS = gql`
-    query GetPosts {
+    query GetAllPosts {
         posts {
             id
             title
