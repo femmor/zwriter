@@ -15,9 +15,15 @@ export async function POST(req: Request): Promise<Response> {
     }
 
     try {
-        const { prompt } = await req.json();
+        const body = await req.json();
+        const prompt = body?.prompt;
 
-        const result = await streamText({
+        // Validate prompt input
+        if (typeof prompt !== "string" || prompt.trim().length === 0) {
+            return new Response("Invalid prompt", { status: 400 });
+        }
+
+        const result = streamText({
             model: openAIModel,
             prompt,
         });
