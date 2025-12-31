@@ -1,2 +1,2 @@
-// A simple references to auth middleware file
+// A simple reference to auth middleware file
 export { default } from "@/middlewares/authMiddleware";

@@ -41,7 +41,7 @@ function AuthErrorContent() {
           <CardContent className="space-y-4">
             <div className="text-center">
               <Button asChild>
-                <Link href="/auth/signin">
+                <Link href="/signin">
                   Try Again
                 </Link>
               </Button>
