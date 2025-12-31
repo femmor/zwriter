@@ -38,7 +38,19 @@ export const authOptions: AuthOptions = {
             clientSecret: process.env.GOOGLE_CLIENT_SECRET || ''
         })
     ],
+    secret: process.env.NEXTAUTH_SECRET,
+    pages: {
+        signIn: '/signin',
+        error: '/error',
+    },
     callbacks: {
+        async jwt({ token, user }) {
+            // Include role in the token when user signs in
+            if (user?.role) {
+                token.role = user.role;
+            }
+            return token;
+        },
         async session({ session }) {
             try {
                 await connectDB();
@@ -47,15 +59,24 @@ export const authOptions: AuthOptions = {
                     return session;
                 }
 
-                const dbUser = await User.findOne({ email: session.user.email });
+                let dbUser = await User.findOne({ email: session.user.email });
 
-                if (dbUser) {
-                    session.user.role = dbUser.role || 'VIEWER';
-                    session.user.id = dbUser._id.toString();
-                } else {
-                    session.user.role = 'VIEWER';
-                    session.user.id = '';
+                if (!dbUser) {
+                    // Create new user
+                    // Check if this is the first user (make them admin)
+                    const userCount = await User.countDocuments();
+                    const isFirstUser = userCount === 0;
+                    
+                    dbUser = await User.create({
+                        name: session.user.name || session.user.email,
+                        email: session.user.email,
+                        image: session.user.image || '',
+                        role: isFirstUser ? 'ADMIN' : 'VIEWER'
+                    });
                 }
+
+                session.user.role = dbUser.role || 'VIEWER';
+                session.user.id = dbUser._id.toString();
 
                 return session;
             } catch (error) {
