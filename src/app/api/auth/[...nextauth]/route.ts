@@ -61,6 +61,22 @@ export const authOptions: AuthOptions = {
             if (user?.role) {
                 token.role = user.role;
             }
+            
+            // If no role in token but we have user email, fetch from database
+            if (!token.role && token.email) {
+                try {
+                    await connectDB();
+                    const dbUser = await User.findOne({ email: token.email });
+                    if (dbUser) {
+                        token.role = dbUser.role || 'VIEWER';
+                        token.userId = dbUser._id.toString();
+                    }
+                } catch (error) {
+                    console.error('JWT callback error:', error);
+                    token.role = 'VIEWER';
+                }
+            }
+            
             return token;
         },
         async session({ session }) {
