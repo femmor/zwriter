@@ -44,6 +44,18 @@ export const authOptions: AuthOptions = {
         error: '/error',
     },
     callbacks: {
+        async redirect({ url, baseUrl }) {
+            // Allows relative callback URLs
+            if (url.startsWith("/")) return `${baseUrl}${url}`
+            // Allows callback URLs on the same origin
+            try {
+                if (new URL(url).origin === new URL(baseUrl).origin) return url
+            } catch (error) {
+                console.error('Redirect URL error:', error);
+            }
+
+            return baseUrl;
+        },
         async jwt({ token, user }) {
             // Include role in the token when user signs in
             if (user?.role) {
