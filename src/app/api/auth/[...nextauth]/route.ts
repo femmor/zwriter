@@ -1,10 +1,12 @@
 import NextAuth, { AuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { MongoDBAdapter } from "@next-auth/mongodb-adapter";
 import getMongoClient from "@/lib/mongoAdapter";
 import { connectDB } from "@/lib/db";
 import User from "@/models/User";
 import { getUserRoleFromCache, setUserRoleInCache } from "@/lib/cache";
+import { verifyPassword } from "@/utils/password";
 
 // Environment variable validation function
 function validateEnvironmentVariables() {
@@ -37,6 +39,60 @@ export const authOptions: AuthOptions = {
         GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID || '',
             clientSecret: process.env.GOOGLE_CLIENT_SECRET || ''
+        }),
+        CredentialsProvider({
+            name: "credentials",
+            credentials: {
+                email: { 
+                    label: "Email", 
+                    type: "email", 
+                    placeholder: "your@email.com" 
+                },
+                password: { 
+                    label: "Password", 
+                    type: "password" 
+                }
+            },
+            async authorize(credentials) {
+                if (!credentials?.email || !credentials?.password) {
+                    return null;
+                }
+
+                try {
+                    await connectDB();
+                    
+                    // Find user with password included
+                    const user = await User.findOne({ 
+                        email: credentials.email.toLowerCase() 
+                    }).select('+password');
+
+                    if (!user || !user.password) {
+                        return null;
+                    }
+
+                    // Verify password
+                    const isValidPassword = await verifyPassword(
+                        credentials.password, 
+                        user.password
+                    );
+
+                    if (!isValidPassword) {
+                        return null;
+                    }
+
+                    // Return user object (password excluded)
+                    return {
+                        id: user._id.toString(),
+                        email: user.email,
+                        name: user.name,
+                        image: user.image || null,
+                        role: user.role
+                    };
+                } catch (error) {
+                    console.error('Auth error:', error);
+                    return null;
+                }
+            }
         })
     ],
     secret: process.env.NEXTAUTH_SECRET,
