@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -96,24 +95,20 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
         return;
       }
 
-      // Auto sign in after successful registration
-      const signInResult = await signIn('credentials', {
-        email: formData.email,
-        password: formData.password,
-        redirect: false,
-      });
-
-      if (signInResult?.error) {
-        setErrors(['Registration successful, but sign in failed. Please sign in manually.']);
-        setIsLoading(false);
-        return;
-      }
-
-      // Success
-      if (onSuccess) {
-        onSuccess();
+      // Check if session was created automatically
+      if (registerData.sessionCreated) {
+        // Session token is already set in cookies, just redirect
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          router.push('/admin');
+        }
       } else {
-        router.push('/admin');
+        // Fallback: manual sign-in required
+        setErrors(['Registration successful. Please sign in to continue.']);
+        setIsLoading(false);
+        router.push('/signin');
+        return;
       }
     } catch (error) {
       console.error('Registration error:', error);

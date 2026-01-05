@@ -71,6 +71,9 @@ export default function SignInPage() {
     } finally {
       setIsLoading(false);
     }
+
+    // Clear password from state after attempt to prevent it from lingering in memory longer than necessary. 
+    setCredentials(prev => ({ ...prev, password: '' }));
   };
 
   const handleGoogleSignIn = async () => {

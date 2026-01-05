@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import User from '@/models/User';
 import { hashPassword, validatePassword } from '@/utils/password';
+import { encode as encodeJWT } from 'next-auth/jwt';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { cookies } from 'next/headers';
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,11 +40,12 @@ export async function POST(request: NextRequest) {
     await connectDB();
 
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    // Normalize email to lowercase and trim whitespace before checking for existing user.
+    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
     if (existingUser) {
       return NextResponse.json(
-        { error: 'User with this email already exists' },
-        { status: 409 }
+        { error: 'Email is already in use' },
+        { status: 400 }
       );
     }
 
@@ -60,13 +64,43 @@ export async function POST(request: NextRequest) {
       role: isFirstUser ? 'ADMIN' : 'VIEWER'
     });
 
+    // Create session token for auto-login
+    const token = {
+      name: newUser.name,
+      email: newUser.email,
+      role: newUser.role,
+      id: newUser._id.toString(),
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + (30 * 24 * 60 * 60) // 30 days
+    };
+
+    // Encode JWT token
+    const encodedToken = await encodeJWT({
+      token,
+      secret: authOptions.secret!,
+    });
+
+    // Create session cookie
+    const cookieStore = await cookies();
+    const secureCookie = process.env.NEXTAUTH_URL?.startsWith('https://') ?? false;
+    const cookieName = secureCookie ? '__Secure-next-auth.session-token' : 'next-auth.session-token';
+    
+    cookieStore.set(cookieName, encodedToken, {
+      httpOnly: true,
+      secure: secureCookie,
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60, // 30 days
+      path: '/'
+    });
+
     // Remove password from response
     const { password: _, ...userWithoutPassword } = newUser.toObject();
 
     return NextResponse.json(
       { 
         message: 'User created successfully', 
-        user: userWithoutPassword 
+        user: userWithoutPassword,
+        sessionCreated: true
       },
       { status: 201 }
     );
