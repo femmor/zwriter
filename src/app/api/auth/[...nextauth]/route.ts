@@ -4,6 +4,7 @@ import { MongoDBAdapter } from "@next-auth/mongodb-adapter";
 import getMongoClient from "@/lib/mongoAdapter";
 import { connectDB } from "@/lib/db";
 import User from "@/models/User";
+import { getUserRoleFromCache, setUserRoleInCache } from "@/lib/cache";
 
 // Environment variable validation function
 function validateEnvironmentVariables() {
@@ -61,16 +62,65 @@ export const authOptions: AuthOptions = {
             if (user?.role) {
                 token.role = user.role;
             }
+            
+            // If no role in token but we have user email, check cache first, then database
+            if (!token.role && token.email) {
+                try {
+                    // First, try to get role from cache
+                    const cachedUserData = getUserRoleFromCache(token.email);
+                    
+                    if (cachedUserData) {
+                        // Use cached data
+                        token.role = cachedUserData.role;
+                        token.userId = cachedUserData.userId;
+                    } else {
+                        // Cache miss - fetch from database
+                        await connectDB();
+                        const dbUser = await User.findOne({ email: token.email });
+                        
+                        if (dbUser) {
+                            const role = dbUser.role || 'VIEWER';
+                            const userId = dbUser._id.toString();
+                            
+                            // Update token
+                            token.role = role;
+                            token.userId = userId;
+                            
+                            // Cache the result
+                            setUserRoleInCache(token.email, role, userId);
+                        } else {
+                            // User not found in database
+                            token.role = 'VIEWER';
+                        }
+                    }
+                } catch (error) {
+                    console.error(
+                        `JWT callback error while fetching user role from database for email: ${token.email ?? 'unknown'}`,
+                        error)
+                    token.role = 'VIEWER';
+                }
+            }
+            
             return token;
         },
         async session({ session }) {
             try {
-                await connectDB();
-                
                 if (!session?.user?.email) {
                     return session;
                 }
 
+                // Try cache first
+                const cachedUserData = getUserRoleFromCache(session.user.email);
+                
+                if (cachedUserData) {
+                    // Use cached data
+                    session.user.role = cachedUserData.role;
+                    session.user.id = cachedUserData.userId;
+                    return session;
+                }
+
+                // Cache miss - fetch from database
+                await connectDB();
                 let dbUser = await User.findOne({ email: session.user.email });
 
                 if (!dbUser) {
@@ -87,8 +137,14 @@ export const authOptions: AuthOptions = {
                     });
                 }
 
-                session.user.role = dbUser.role || 'VIEWER';
-                session.user.id = dbUser._id.toString();
+                const role = dbUser.role || 'VIEWER';
+                const userId = dbUser._id.toString();
+
+                // Cache the result
+                setUserRoleInCache(session.user.email, role, userId);
+
+                session.user.role = role;
+                session.user.id = userId;
 
                 return session;
             } catch (error) {
