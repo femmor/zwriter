@@ -9,8 +9,10 @@ enum UserRole {
 interface User extends Document {
     name: string;
     email: string;
-    image: string;
+    image?: string;
     role: UserRole;
+    password?: string; // Optional for OAuth users
+    emailVerified?: Date; // For email verification
 }
 
 const userSchema = new Schema({
@@ -25,6 +27,13 @@ const userSchema = new Schema({
     },
     image: { 
         type: String 
+    },
+    password: {
+        type: String,
+        select: false // Don't include password in queries by default
+    },
+    emailVerified: {
+        type: Date
     },
     role: { 
         type: String, 
