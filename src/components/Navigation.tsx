@@ -4,7 +4,6 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { Sign } from "crypto";
 import { SignOutButton } from "./SignOutButton";
 
 export default function Navigation() {
