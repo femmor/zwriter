@@ -190,7 +190,7 @@ export default function EditorPage() {
                     <p className="text-gray-600 mt-1">Create and edit your blog posts with AI assistance</p>
                 </div>
                 {currentPost && (
-                    <Badge variant="outline" className="text-sm">
+                    <Badge variant="outline" className={currentPost.status === 'DRAFT' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}>
                         {currentPost.status}
                     </Badge>
                 )}
@@ -225,7 +225,7 @@ export default function EditorPage() {
                                             <strong>Slug:</strong> {currentPost.slug}
                                         </div>
                                         <div>
-                                            <strong>Status:</strong> {currentPost.status}
+                                            <strong>Status:</strong> <span className={`px-2 py-1 rounded ${currentPost.status === 'DRAFT' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>{currentPost.status}</span>
                                         </div>
                                         <div className="col-span-2 flex items-center justify-between">
                                             <span><strong>Collaboration:</strong></span>
