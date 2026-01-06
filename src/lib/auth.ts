@@ -27,7 +27,8 @@ export async function isAdminOrEditor(): Promise<boolean> {
 
 // Check if user can access admin routes
 export async function canAccessAdmin(): Promise<boolean> {
-  return await isAdminOrEditor();
+  const hasAccess = await isAdminOrEditor();
+  return hasAccess;
 }
 
 // Get current user

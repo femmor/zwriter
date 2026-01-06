@@ -69,13 +69,12 @@ export default function SignInPage() {
         redirect: false
       });
       
-      console.log('Sign in result:', result);
       
       if (result?.error) {
         setError('Invalid email or password');
       } else if (result?.ok) {
         // Force a page reload to establish the session properly
-        window.location.href = '/admin';
+        router.replace('/admin');
       }
     } catch (error) {
       console.error('Sign in error:', error);
