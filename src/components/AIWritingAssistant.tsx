@@ -168,8 +168,9 @@ export function AIWritingAssistant({
 
   const clearResults = useCallback(() => {
     stop()
-    // Note: useCompletion doesn't have a built-in clear method
-    // The completion will be cleared when a new request starts
+    // Note: useCompletion doesn't expose a clear method. This only stops the
+    // current generation; the existing completion text remains until a new
+    // request overwrites it.
   }, [stop])
 
   return (

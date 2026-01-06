@@ -135,16 +135,27 @@ export default function EditorPage() {
     }
 
     const handleAIInsert = (text: string) => {
-        // Insert AI-generated text at the current cursor position
-        setContent(content + '\n\n' + text)
+         // Insert AI-generated text at the current cursor position using the editor commands
+        if (editorRef.current) {
+            // Preserve the blank line before the inserted text, as in the previous implementation
+            editorRef.current.editor?.commands.insertContent('\n\n' + text)
+            // Keep local content state in sync with the editor's actual content
+            if (typeof editorRef.current.getHTML === 'function') {
+                setContent(editorRef.current.getHTML())
+            }
+        } else {
+            // Fallback if the editor instance is not available
+            setContent(content + '\n\n' + text)
+        }
     }
 
     const handleAIReplace = (text: string) => {
-        // Replace selected text with AI-generated text
-        if (selectedText) {
-            setContent(content.replace(selectedText, text))
-            setSelectedText('')
+        // Replace selected text with AI-generated text using TipTap commands
+        if (editorRef.current) {
+            editorRef.current.editor?.chain().focus().insertContent(text).run()
+            setContent(editorRef.current.getHTML())
         }
+        setSelectedText('')
     }
 
     const handleAIAssist = (selection: string) => {

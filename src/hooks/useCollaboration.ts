@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import * as Y from 'yjs'
 import { WebsocketProvider } from 'y-websocket'
 import Collaboration from '@tiptap/extension-collaboration'
@@ -31,14 +31,13 @@ const generateUserColor = () => {
 }
 
 export function useCollaboration(config: CollaborationConfig | null): CollaborationHookReturn {
-  const [yDoc, setYDoc] = useState<Y.Doc | null>(null)
-  const [provider, setProvider] = useState<WebsocketProvider | null>(null)
   const [isConnected, setIsConnected] = useState(false)
   const [connectedUsers, setConnectedUsers] = useState(0)
 
-  useEffect(() => {
+  // Memoize the doc and provider creation to avoid recreating them unnecessarily
+  const { yDoc, provider } = useMemo(() => {
     if (!config) {
-      return
+      return { yDoc: null, provider: null }
     }
 
     const { documentId, userName, userColor } = config
@@ -55,33 +54,42 @@ export function useCollaboration(config: CollaborationConfig | null): Collaborat
       doc
     )
 
-    // Handle connection status
-    wsProvider.on('status', (event: { status: string }) => {
-      setIsConnected(event.status === 'connected')
-    })
-
-    // Track connected users
-    wsProvider.awareness.on('update', () => {
-      setConnectedUsers(wsProvider.awareness.getStates().size)
-    })
-
     // Set user awareness info
     wsProvider.awareness.setLocalStateField('user', {
       name: userName,
       color: userColor || generateUserColor(),
     })
 
-    // Use setTimeout to avoid synchronous setState in effect
-    setTimeout(() => {
-      setYDoc(doc)
-      setProvider(wsProvider)
-    }, 0)
+    return { yDoc: doc, provider: wsProvider }
+  }, [config])
+
+  useEffect(() => {
+    if (!provider) {
+      return
+    }
+
+    // Handle connection status
+    const handleStatus = (event: { status: string }) => {
+      setIsConnected(event.status === 'connected')
+    }
+
+    // Track connected users
+    const handleAwarenessUpdate = () => {
+      setConnectedUsers(provider.awareness.getStates().size)
+    }
+
+    provider.on('status', handleStatus)
+    provider.awareness.on('update', handleAwarenessUpdate)
 
     return () => {
-      wsProvider.destroy()
-      doc.destroy()
+      provider.off('status', handleStatus)
+      provider.awareness.off('update', handleAwarenessUpdate)
+      provider.destroy()
+      if (yDoc) {
+        yDoc.destroy()
+      }
     }
-  }, [config])
+  }, [provider, yDoc])
 
   const collaborationExtension = yDoc ? Collaboration.configure({
     document: yDoc,
