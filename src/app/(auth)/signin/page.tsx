@@ -1,8 +1,8 @@
 "use client"
 
-import { signIn, getSession } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -25,22 +25,30 @@ import {
 import Link from "next/link";
 
 export default function SignInPage() {
-  const router = useRouter();
+  const { status, data: session } = useSession();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
 
-  // Check if user is already signed in
-  useEffect(() => {
-    const checkSession = async () => {
-      const session = await getSession();
-      if (session) {
-        router.push('/admin');
-      }
-    };
-    checkSession();
-  }, [router]);
+  // Show loading state
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect authenticated users - use server-side redirect
+  if (status === 'authenticated' && session?.user) {
+    router.replace('/admin');
+    return null;
+  }
 
   const handleCredentialSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,13 +65,17 @@ export default function SignInPage() {
       const result = await signIn('credentials', {
         email: credentials.email,
         password: credentials.password,
+        callbackUrl: '/admin',
         redirect: false
       });
+      
+      console.log('Sign in result:', result);
       
       if (result?.error) {
         setError('Invalid email or password');
       } else if (result?.ok) {
-        router.push('/admin');
+        // Force a page reload to establish the session properly
+        window.location.href = '/admin';
       }
     } catch (error) {
       console.error('Sign in error:', error);
@@ -81,20 +93,13 @@ export default function SignInPage() {
       setIsLoading(true);
       setError(null);
       
-      const result = await signIn('google', {
-        callbackUrl: '/admin',
-        redirect: false
+      // Google OAuth will redirect automatically
+      await signIn('google', {
+        callbackUrl: '/admin'
       });
-      
-      if (result?.error) {
-        setError('Failed to sign in. Please try again.');
-      } else if (result?.url) {
-        router.push(result.url);
-      }
     } catch (error) {
       console.error('Sign in error:', error);
       setError('An unexpected error occurred.');
-    } finally {
       setIsLoading(false);
     }
   };

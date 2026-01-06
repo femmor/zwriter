@@ -1,11 +1,9 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getSession } from "@/lib/auth";
+import Navigation from "@/components/Navigation";
 
 export default async function Home() {
-  const session = await getSession();
-
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b">
@@ -17,22 +15,7 @@ export default async function Home() {
               </h1>
               <p className="text-gray-600">AI-powered writing assistant</p>
             </div>
-            <nav className="flex gap-4">
-              {session ? (
-                <>
-                  <Button variant="outline" asChild>
-                    <Link href="/admin">Dashboard</Link>
-                  </Button>
-                  <Button asChild>
-                    <Link href="/admin/editor">Write</Link>
-                  </Button>
-                </>
-              ) : (
-                <Button asChild>
-                  <Link href="/signin">Sign In</Link>
-                </Button>
-              )}
-            </nav>
+            <Navigation />
           </div>
         </div>
       </header>
