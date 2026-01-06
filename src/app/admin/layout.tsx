@@ -2,9 +2,21 @@ import { ReactNode } from "react";
 import Link from "next/link";
 import { SignOutButton } from "@/components/SignOutButton";
 import { getSession } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
     const session = await getSession();
+    
+    // Check authentication
+    if (!session || !session.user) {
+        redirect('/signin');
+    }
+    
+    // CRITICAL: Check role-based authorization - only ADMIN and EDITOR roles allowed
+    const allowedRoles = ['ADMIN', 'EDITOR'];
+    if (!allowedRoles.includes(session.user.role)) {
+        redirect('/unauthorized');
+    }
 
     return (
         <div className="flex min-h-screen">

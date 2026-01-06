@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,6 +16,7 @@ interface RegisterFormProps {
 }
 
 export default function RegisterForm({ onSuccess }: RegisterFormProps) {
+  const { status, data: session } = useSession();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -26,6 +28,20 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
   const [errors, setErrors] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  // Defensive: Redirect authenticated users away from register form
+  if (status === 'authenticated' && session?.user) {
+    router.replace('/admin');
+    return null;
+  }
+  if (status === 'loading') {
+    return (
+      <div className="flex flex-col items-center gap-4">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <p className="text-gray-600">Loading...</p>
+      </div>
+    );
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -97,17 +113,17 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
 
       // Check if session was created automatically
       if (registerData.sessionCreated) {
-        // Session token is already set in cookies, just redirect
+        // Session token is already set in cookies, navigate to admin
         if (onSuccess) {
           onSuccess();
         } else {
-          router.push('/admin');
+          router.replace('/admin');
         }
       } else {
         // Fallback: manual sign-in required
         setErrors(['Registration successful. Please sign in to continue.']);
         setIsLoading(false);
-        router.push('/signin');
+        router.replace('/signin');
         return;
       }
     } catch (error) {

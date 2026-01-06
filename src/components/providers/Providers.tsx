@@ -10,7 +10,12 @@ interface ProvidersProps {
 
 export default function Providers({ children }: ProvidersProps) {
   return (
-    <SessionProvider>
+    <SessionProvider 
+      // Force session to refresh every 5 minutes to catch changes
+      refetchInterval={5 * 60}
+      // Also refetch when window becomes focused
+      refetchOnWindowFocus={true}
+    >
       <ApolloWrapper>{children}</ApolloWrapper>
     </SessionProvider>
   );

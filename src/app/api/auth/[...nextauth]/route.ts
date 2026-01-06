@@ -5,7 +5,6 @@ import { MongoDBAdapter } from "@next-auth/mongodb-adapter";
 import getMongoClient from "@/lib/mongoAdapter";
 import { connectDB } from "@/lib/db";
 import User from "@/models/User";
-import { getUserRoleFromCache, setUserRoleInCache } from "@/lib/cache";
 import { verifyPassword } from "@/utils/password";
 
 // Environment variable validation function
@@ -54,6 +53,7 @@ export const authOptions: AuthOptions = {
                 }
             },
             async authorize(credentials) {
+                
                 if (!credentials?.email || !credentials?.password) {
                     return null;
                 }
@@ -81,13 +81,14 @@ export const authOptions: AuthOptions = {
                     }
 
                     // Return user object (password excluded)
-                    return {
+                    const userObj = {
                         id: user._id.toString(),
                         email: user.email,
                         name: user.name,
                         image: user.image || null,
                         role: user.role
                     };
+                    return userObj;
                 } catch (error) {
                     console.error('Auth error:', error);
                     return null;
@@ -95,7 +96,14 @@ export const authOptions: AuthOptions = {
             }
         })
     ],
-    secret: process.env.NEXTAUTH_SECRET,
+    secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
+    session: {
+        strategy: 'jwt',
+        maxAge: 30 * 24 * 60 * 60, // 30 days
+    },
+    jwt: {
+        maxAge: 30 * 24 * 60 * 60, // 30 days
+    },
     pages: {
         signIn: '/signin',
         error: '/error',
@@ -111,110 +119,30 @@ export const authOptions: AuthOptions = {
                 console.error('Redirect URL error:', error);
             }
 
-            return baseUrl;
+            return `${baseUrl}/admin`; // Default to admin dashboard
         },
         async jwt({ token, user }) {
-            // Include role in the token when user signs in
-            if (user?.role) {
+            
+            // On sign in, add user info to token
+            if (user) {
                 token.role = user.role;
+                token.userId = user.id;
+                token.email = user.email;
+                token.name = user.name;
+                return token;
             }
             
-            // If no role in token but we have user email, check cache first, then database
-            if (!token.role && token.email) {
-                try {
-                    // First, try to get role from cache
-                    const cachedUserData = getUserRoleFromCache(token.email);
-                    
-                    if (cachedUserData) {
-                        // Use cached data
-                        token.role = cachedUserData.role;
-                        token.userId = cachedUserData.userId;
-                    } else {
-                        // Cache miss - fetch from database
-                        await connectDB();
-                        const dbUser = await User.findOne({ email: token.email });
-                        
-                        if (dbUser) {
-                            const role = dbUser.role || 'VIEWER';
-                            const userId = dbUser._id.toString();
-                            
-                            // Update token
-                            token.role = role;
-                            token.userId = userId;
-                            
-                            // Cache the result
-                            setUserRoleInCache(token.email, role, userId);
-                        } else {
-                            // User not found in database
-                            token.role = 'VIEWER';
-                        }
-                    }
-                } catch (error) {
-                    console.error(
-                        `JWT callback error while fetching user role from database for email: ${token.email ?? 'unknown'}`,
-                        error)
-                    token.role = 'VIEWER';
-                }
-            }
-            
+            // For subsequent calls, token should already have the role
             return token;
         },
-        async session({ session }) {
-            try {
-                if (!session?.user?.email) {
-                    return session;
-                }
-
-                // Try cache first
-                const cachedUserData = getUserRoleFromCache(session.user.email);
-                
-                if (cachedUserData) {
-                    // Use cached data
-                    session.user.role = cachedUserData.role;
-                    session.user.id = cachedUserData.userId;
-                    return session;
-                }
-
-                // Cache miss - fetch from database
-                await connectDB();
-                let dbUser = await User.findOne({ email: session.user.email });
-
-                if (!dbUser) {
-                    // Create new user
-                    // Check if this is the first user (make them admin)
-                    const userCount = await User.countDocuments();
-                    const isFirstUser = userCount === 0;
-                    
-                    dbUser = await User.create({
-                        name: session.user.name || session.user.email,
-                        email: session.user.email,
-                        image: session.user.image || '',
-                        role: isFirstUser ? 'ADMIN' : 'VIEWER'
-                    });
-                }
-
-                const role = dbUser.role || 'VIEWER';
-                const userId = dbUser._id.toString();
-
-                // Cache the result
-                setUserRoleInCache(session.user.email, role, userId);
-
-                session.user.role = role;
-                session.user.id = userId;
-
-                return session;
-            } catch (error) {
-                console.error('Session callback error:', error);
-                // Return session even if database operations fail
-                return {
-                    ...session,
-                    user: {
-                        ...session.user,
-                        role: 'VIEWER',
-                        id: ''
-                    }
-                };
+        async session({ session, token }) {
+            
+            if (session?.user && token) {
+                session.user.role = token.role || 'VIEWER';
+                session.user.id = token.userId || '';
             }
+            
+            return session;
         }
     }
 };

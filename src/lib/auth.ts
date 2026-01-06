@@ -18,6 +18,19 @@ export async function isAdmin(): Promise<boolean> {
   return session?.user?.role === 'ADMIN';
 }
 
+// Check if user has admin or editor role
+export async function isAdminOrEditor(): Promise<boolean> {
+  const session = await getSession();
+  const role = session?.user?.role;
+  return role === 'ADMIN' || role === 'EDITOR';
+}
+
+// Check if user can access admin routes
+export async function canAccessAdmin(): Promise<boolean> {
+  const hasAccess = await isAdminOrEditor();
+  return hasAccess;
+}
+
 // Get current user
 export async function getCurrentUser() {
   const session = await getSession();

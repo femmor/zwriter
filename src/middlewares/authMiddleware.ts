@@ -1,5 +1,4 @@
 import { withAuth } from "next-auth/middleware";
-import { getToken } from "next-auth/jwt";
 import type { NextRequestWithAuth } from "next-auth/middleware";
 
 
@@ -8,28 +7,29 @@ export default withAuth(
   // Middleware function to run after authentication check
   async function middleware(req: NextRequestWithAuth) {
     const { pathname } = req.nextUrl;
-
+    
     // Allow auth API routes to pass through
     if (pathname.startsWith("/api/auth")) {
       return;
     }
 
-    // Protect admin routes
-    if (pathname.startsWith("/admin")) {
-      const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-
-      // Check if user is authenticated
-      if (!token) {
+    // Redirect authenticated users away from auth pages
+    if (pathname.startsWith("/signin") || pathname.startsWith("/signup")) {
+      if (req.nextauth.token) {
         const url = req.nextUrl.clone();
-        url.pathname = "/signin";
+        url.pathname = "/admin";
         return Response.redirect(url);
       }
+      return; // Allow unauthenticated users to access auth pages
+    }
 
-      // For development: Allow any authenticated user to access admin
-      // In production, you can change this to check for specific roles
-      const allowedRoles = ["ADMIN", "EDITOR", "VIEWER"]; // Temporary: allow all roles
+    // Protect admin routes - this only runs if user is authenticated (due to authorized callback)
+    if (pathname.startsWith("/admin")) {
+      // Only allow users with ADMIN or EDITOR roles to access admin routes
+      const allowedRoles = ["ADMIN", "EDITOR"]; 
+      const userRole = req.nextauth.token?.role as string;
       
-      if (!allowedRoles.includes(token.role as string)) {
+      if (!allowedRoles.includes(userRole)) {
         const url = req.nextUrl.clone();
         url.pathname = "/unauthorized";
         return Response.redirect(url);
@@ -38,11 +38,34 @@ export default withAuth(
   },
   {
     callbacks: {
-      authorized: () => true, // Let the middleware function handle authorization
+      authorized: ({ token, req }) => {
+        const { pathname } = req.nextUrl;
+        
+        // Allow access to auth pages without authentication
+        if (pathname.startsWith("/signin") || pathname.startsWith("/signup")) {
+          return true;
+        }
+        
+        // Require authentication for admin routes
+        if (pathname.startsWith("/admin")) {
+          const hasToken = !!token;
+          return hasToken;
+        }
+        
+        // Allow other routes
+        return true;
+      },
     },
   }
 );
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/auth/:path*"],
+  matcher: [
+    "/admin/:path*", 
+    "/signin", 
+    "/signup", 
+    "/api/auth/:path*",
+    "/preview/:path*",  // Add preview routes if they need protection
+    "/((?!api|_next/static|_next/image|favicon.ico|public|unauthorized).*)"
+  ],
 };
