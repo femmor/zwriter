@@ -8,8 +8,6 @@ export default withAuth(
   async function middleware(req: NextRequestWithAuth) {
     const { pathname } = req.nextUrl;
     
-    console.log(`Middleware triggered for: ${pathname}, Token exists: ${!!req.nextauth.token}, User role: ${req.nextauth.token?.role}`);
-
     // Allow auth API routes to pass through
     if (pathname.startsWith("/api/auth")) {
       return;
@@ -18,7 +16,6 @@ export default withAuth(
     // Redirect authenticated users away from auth pages
     if (pathname.startsWith("/signin") || pathname.startsWith("/signup")) {
       if (req.nextauth.token) {
-        console.log(`Redirecting authenticated user away from auth page: ${pathname}`);
         const url = req.nextUrl.clone();
         url.pathname = "/admin";
         return Response.redirect(url);
@@ -32,10 +29,7 @@ export default withAuth(
       const allowedRoles = ["ADMIN", "EDITOR"]; 
       const userRole = req.nextauth.token?.role as string;
       
-      console.log(`Admin access attempt: ${req.nextauth.token?.email} with role: ${userRole} for path: ${pathname}`);
-      
       if (!allowedRoles.includes(userRole)) {
-        console.log(`Access denied for role: ${userRole}`);
         const url = req.nextUrl.clone();
         url.pathname = "/unauthorized";
         return Response.redirect(url);
@@ -47,20 +41,14 @@ export default withAuth(
       authorized: ({ token, req }) => {
         const { pathname } = req.nextUrl;
         
-        console.log(`Authorized callback for: ${pathname}`);
-        console.log(`Token exists: ${!!token}`);
-        console.log(`Token details:`, JSON.stringify(token, null, 2));
-        
         // Allow access to auth pages without authentication
         if (pathname.startsWith("/signin") || pathname.startsWith("/signup")) {
-          console.log('Allowing auth pages');
           return true;
         }
         
         // Require authentication for admin routes
         if (pathname.startsWith("/admin")) {
           const hasToken = !!token;
-          console.log(`Admin route access - Has token: ${hasToken}`);
           return hasToken;
         }
         
