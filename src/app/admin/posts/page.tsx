@@ -2,17 +2,7 @@
 
 import { useQuery } from "@apollo/client/react";
 import {gql} from '@apollo/client';
-
-// Define the types for our GraphQL response
-interface Post {
-    id: string;
-    title: string;
-    status: string;
-}
-
-interface PostsData {
-    posts: Post[];
-}
+import { Post, PostsData } from "@/types/types";
 
 const POSTS = gql`
     query GetAllPosts {

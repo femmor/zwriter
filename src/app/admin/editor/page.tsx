@@ -64,8 +64,24 @@ const GENERATE_POST_WITH_AI = gql`
   }
 `
 
+const PUBLISH_POST = gql`
+  mutation PublishPost($id: ID!, $status: String!) {
+    publishPost(id: $id, status: $status) {
+      id
+      title
+      slug
+      content
+      status
+    }
+  }
+`
+
 interface GeneratePostWithAIResponse {
     generatePostWithAI: Post
+}
+
+interface PublishPostResponse {
+    publishPost: Post
 }
 
 export default function EditorPage() {
@@ -81,6 +97,36 @@ export default function EditorPage() {
     const [createPost] = useMutation<CreatePostResponse>(CREATE_POST)
     const [updatePost] = useMutation<UpdatePostResponse>(UPDATE_POST)
     const [generatePostWithAI] = useMutation<GeneratePostWithAIResponse>(GENERATE_POST_WITH_AI)
+    const [publishPost] = useMutation<PublishPostResponse>(PUBLISH_POST)
+
+    const handlePublish = async () => {
+        if (!currentPost) {
+            alert('Please save your post first')
+            return
+        }
+
+        const newStatus = currentPost.status === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED'
+        const action = newStatus === 'PUBLISHED' ? 'publish' : 'unpublish'
+        
+        if (confirm(`Are you sure you want to ${action} this post?`)) {
+            try {
+                const result = await publishPost({
+                    variables: {
+                        id: currentPost.id,
+                        status: newStatus
+                    }
+                })
+                
+                if (result.data) {
+                    setCurrentPost(result.data.publishPost)
+                    alert(`Post ${action}ed successfully!`)
+                }
+            } catch (error) {
+                console.error(`Error ${action}ing post:`, error)
+                alert(`Failed to ${action} post. Please try again.`)
+            }
+        }
+    }
 
     const handleSave = async () => {
         setIsSaving(true)
@@ -305,6 +351,18 @@ export default function EditorPage() {
                         >
                             <Eye size={18} />
                             Preview
+                        </Button>
+                        <Button
+                            onClick={handlePublish}
+                            disabled={!currentPost}
+                            size="lg"
+                            className={`flex items-center gap-2 ${
+                                currentPost?.status === 'PUBLISHED'
+                                    ? 'bg-yellow-600 text-white hover:bg-yellow-700'
+                                    : 'bg-green-600 text-white hover:bg-green-700'
+                            } disabled:bg-gray-300 disabled:text-gray-500`}
+                        >
+                            {currentPost?.status === 'PUBLISHED' ? 'Unpublish' : 'Publish'}
                         </Button>
                     </div>
                 </div>

@@ -1,9 +1,35 @@
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Navigation from "@/components/Navigation";
 
-export default async function Home() {
+
+import { useQuery } from "@apollo/client/react";
+import {gql} from '@apollo/client';
+import { Post, PostsData } from "@/types/types";
+import { createPreviewText, formatPostContent } from "@/utils/formatPostContent";
+
+const POSTS = gql`
+    query GetAllPosts {
+        posts {
+            id
+            title
+            content
+            status
+        }
+    }
+`;
+
+export default function Home() {
+  const { data, loading, error } = useQuery<PostsData>(POSTS);
+
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error: {error.message}</p>;
+
+  const publishedPosts = data?.posts?.filter(post => post.status === 'PUBLISHED') ?? [];
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b">
@@ -31,50 +57,21 @@ export default async function Home() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <Card>
+          {publishedPosts.map((post: Post) => (
+            <Card key={post.id} className="border rounded-lg shadow-sm hover:shadow-md transition-shadow">
             <CardHeader>
-              <CardTitle>Welcome to ZWriter</CardTitle>
-              <CardDescription>Your journey starts here</CardDescription>
+              <CardTitle>{post.title}</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600 mb-4">
-                ZWriter is an AI-powered writing assistant designed to help you create amazing content.
+              <p className="text-gray-700 mb-4">
+                {createPreviewText(formatPostContent(post.content), 150)}
               </p>
               <Button variant="outline" asChild>
-                <Link href="/signin">Get Started</Link>
+                <Link href={`/posts/${post.id}`}>Read More</Link>
               </Button>
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>AI Writing Features</CardTitle>
-              <CardDescription>Discover what&apos;s possible</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-4">
-                Explore our powerful AI features that help you write better, faster, and more creatively.
-              </p>
-              <Button variant="outline" asChild>
-                <Link href="/signin">Learn More</Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Getting Started Guide</CardTitle>
-              <CardDescription>Quick start tutorial</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-4">
-                Follow our step-by-step guide to make the most of ZWriter&apos;s features.
-              </p>
-              <Button variant="outline" asChild>
-                <Link href="/signin">Start Tutorial</Link>
-              </Button>
-            </CardContent>
-          </Card>
+          ))}
         </div>
 
         <div className="text-center mt-12">
