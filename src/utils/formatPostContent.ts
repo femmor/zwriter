@@ -47,11 +47,6 @@ export function formatPostContent(content: string): string {
         .trim();
 }
 
-// Additional utility for extracting just the text content without any formatting
-export function stripMarkdown(content: string): string {
-    return formatPostContent(content);
-}
-
 // Utility for creating preview text with character limit
 export function createPreviewText(content: string, maxLength: number = 150): string {
     const cleanText = formatPostContent(content);
