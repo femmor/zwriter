@@ -9,6 +9,7 @@ const uuid = crypto.randomUUID();
 
 interface CreatePostArgs {
     title: string;
+    content?: string;
 }
 
 interface PostsArgs {
@@ -30,6 +31,11 @@ interface UpdatePostArgs {
 
 interface PostIdArgs {
     id: string;
+}
+
+interface PublishPostArgs {
+    id: string;
+    status: 'DRAFT' | 'PUBLISHED';
 }
 
 interface Context {
@@ -92,6 +98,7 @@ export const resolvers = {
 
                 const newPost = await Post.create({
                     title: args.title,
+                    content: args.content,
                     slug: finalSlug,
                     author: ctx.user.id,
                     status: 'DRAFT'
@@ -215,6 +222,31 @@ export const resolvers = {
             }
 
             return await PostVersionService.restoreVersion(postId, versionId, ctx.user.id);
+        },
+        publishPost: async (_: unknown, { id, status }: PublishPostArgs, ctx: Context) => {
+            if (!ctx.user?.id) {
+                throw new Error('Authentication required to publish a post.');
+            }
+
+            if (!ctx.user.role || !['EDITOR', 'ADMIN'].includes(ctx.user.role)) {
+                throw new Error('Insufficient permissions. Editor or Admin role required.');
+            }
+
+            const post = await Post.findById(id);
+            if (!post) {
+                throw new Error('Post not found');
+            }
+
+            // Update the post status
+            post.status = status;
+            
+            // Set published date if publishing for the first time
+            if (status === 'PUBLISHED' && !post.publishedAt) {
+                post.publishedAt = new Date();
+            }
+            
+            await post.save();
+            return post;
         },
     },
 };

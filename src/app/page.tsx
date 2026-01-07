@@ -8,24 +8,15 @@ import Navigation from "@/components/Navigation";
 
 import { useQuery } from "@apollo/client/react";
 import {gql} from '@apollo/client';
-
-// Define the types for our GraphQL response
-interface Post {
-    id: string;
-    content: string;
-    title: string;
-    status: string;
-}
-
-interface PostsData {
-    posts: Post[];
-}
+import { Post, PostsData } from "@/types/types";
+import { formatPostContent } from "@/utils/formatPostContent";
 
 const POSTS = gql`
     query GetAllPosts {
         posts {
             id
             title
+            content
             status
         }
     }
@@ -36,6 +27,8 @@ export default function Home() {
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error.message}</p>;
+
+  const publishedPosts = data?.posts?.filter(post => post.status === 'PUBLISHED') ?? [];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -64,12 +57,15 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {data?.posts?.map((post: Post) => (
+          {publishedPosts.map((post: Post) => (
             <Card key={post.id} className="border rounded-lg shadow-sm hover:shadow-md transition-shadow">
             <CardHeader>
               <CardTitle>{post.title}</CardTitle>
             </CardHeader>
             <CardContent>
+              <p className="text-gray-700 mb-4">
+                {formatPostContent(post.content.length > 100 ? post.content.substring(0, 100) + "..." : post.content)}
+              </p>
               <Button variant="outline" asChild>
                 <Link href={`/posts/${post.id}`}>Read More</Link>
               </Button>
