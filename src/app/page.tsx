@@ -9,7 +9,7 @@ import Navigation from "@/components/Navigation";
 import { useQuery } from "@apollo/client/react";
 import {gql} from '@apollo/client';
 import { Post, PostsData } from "@/types/types";
-import { formatPostContent } from "@/utils/formatPostContent";
+import { createPreviewText, formatPostContent } from "@/utils/formatPostContent";
 
 const POSTS = gql`
     query GetAllPosts {
@@ -64,7 +64,7 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <p className="text-gray-700 mb-4">
-                {formatPostContent(post.content.length > 100 ? post.content.substring(0, 100) + "..." : post.content)}
+                {createPreviewText(formatPostContent(post.content), 150)}
               </p>
               <Button variant="outline" asChild>
                 <Link href={`/posts/${post.id}`}>Read More</Link>
